@@ -1,0 +1,96 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "schema-mcp"
+version = "1.0.0"
+description = "A Model Context Protocol (MCP) server for managing schema documents with semantic search capabilities"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Lacrimosa Contributors" }
+]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "schema",
+    "documentation",
+    "semantic-search",
+    "llm",
+    "claude",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+
+dependencies = [
+    "mcp>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+semantic = [
+    "sentence-transformers>=2.2.2",
+    "numpy>=1.24.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.7.0",
+    "ruff>=0.1.0",
+]
+all = [
+    "schema-mcp[semantic,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/stelitsyn/lacrimosa"
+Documentation = "https://github.com/stelitsyn/lacrimosa#readme"
+Repository = "https://github.com/stelitsyn/lacrimosa.git"
+Issues = "https://github.com/stelitsyn/lacrimosa/issues"
+
+[project.scripts]
+schema-mcp = "schema_mcp.server:mcp.run"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/examples",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/schema_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+strict = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]

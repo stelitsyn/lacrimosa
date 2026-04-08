@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.lacrimosa.dashboard</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>__LACRIMOSA_VENV__/bin/python</string>
+		<string>__LACRIMOSA_PROJECT_DIR__/scripts/lacrimosa_dashboard.py</string>
+		<string>--port</string>
+		<string>1791</string>
+		<string>--bind</string>
+		<string>0.0.0.0</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__LACRIMOSA_PROJECT_DIR__</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>__HOME__/.claude/lacrimosa/dashboard-stdout.log</string>
+	<key>StandardErrorPath</key>
+	<string>__HOME__/.claude/lacrimosa/dashboard-stderr.log</string>
+</dict>
+</plist>

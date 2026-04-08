@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Bash",
+        "hooks": [{"type": "command", "command": ".claude/hooks/enforce-corrections.sh"}]
+      },
+      {
+        "matcher": "mcp__linear-server__linear_",
+        "hooks": [{"type": "command", "command": ".claude/hooks/block-linear-mcp-writes.sh"}]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [{"type": "command", "command": ".claude/hooks/security-review-precommit.sh"}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/check-python-imports.sh"},
+          {"type": "command", "command": ".claude/hooks/god-class-check.sh"}
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {"hooks": [{"type": "command", "command": ".claude/hooks/redirect-idle-teammate.sh"}]}
+    ],
+    "TaskCompleted": [
+      {"hooks": [{"type": "command", "command": ".claude/hooks/validate-task-completion.sh"}]}
+    ]
+  },
+  "mcpServers": {
+    "schema-mcp": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "schema_mcp.server"],
+      "env": {"SCHEMAS_DIR": "./schemas"}
+    }
+  }
+}

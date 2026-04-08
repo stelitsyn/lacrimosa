@@ -1,0 +1,9 @@
+.venv/
+**/.DS_Store
+**/__pycache__/
+*.pyc
+**/.pytest_cache/
+*.egg-info/
+dist/
+build/
+.embeddings_cache.json

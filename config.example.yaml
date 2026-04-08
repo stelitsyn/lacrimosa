@@ -1,0 +1,76 @@
+# Lacrimosa — Autonomous Work Orchestration
+# Copy to ~/.claude/lacrimosa/config.yaml and fill in all <PLACEHOLDER> values.
+
+product:
+  name: "<YOUR_PRODUCT_NAME>"           # e.g. "Acme SaaS"
+  description: "<YOUR_PRODUCT_DESC>"   # e.g. "B2B invoicing platform"
+  slug: "<your-product-slug>"          # e.g. "acme" (used in review site URLs)
+
+conductor:
+  project_root: "<ABSOLUTE_PATH_TO_YOUR_REPO>"
+  default_project: "<YOUR_DEFAULT_LINEAR_PROJECT>"
+  poll_interval_seconds: 300
+  worktree_base: /tmp/lacrimosa
+  state_file: ~/.claude/lacrimosa/state.db
+  log_file: ~/.claude/lacrimosa/conductor.log
+  default_session_mode: interactive
+
+linear:
+  workspace_slug: "<your-linear-workspace>"   # e.g. "acme-inc"
+  issue_prefix: "<ISSUE_PREFIX>"              # e.g. "ACM"
+  team_members:
+    - key: "owner"
+      id: "<LINEAR_USER_UUID>"
+      name: "<Full Name>"
+    # Add more team members as needed
+
+domains:
+  autonomous:
+    - "<Domain A>"       # Lacrimosa acts without human approval
+    - "<Domain B>"
+  approval_required:
+    - "<Domain C>"       # Human must approve before implementation
+  out_of_scope:
+    - "<Domain D>"       # Lacrimosa must never touch these
+
+project_routing:
+  "<Linear Project Name>":
+    - "<keyword1>"
+    - "<keyword2>"
+
+# Optional — only needed if using GCP-backed internal sensors
+data_sources:
+  gcp:
+    project_id: "<GCP_PROJECT_ID>"
+    database_name: "<YOUR_DB_NAME>"       # e.g. "myapp_prod"
+    cloud_sql_instances:
+      - region: "us-central1"
+        instance: "<INSTANCE_NAME>"
+      - region: "europe-west1"
+        instance: "<INSTANCE_NAME>"
+
+# ── COO — Release observer ────────────────────────────────────────────────────
+# Observer-only by default: tracks merges, drafts changelogs and release plans,
+# posts them to Linear for human review. Does not execute releases.
+# deploy_authority: false (default) — flip to true when ready to activate
+# autonomous releases (not yet implemented in open-source release).
+# coo:
+#   deploy_authority: false
+
+watchdog:
+  bundle_id: "com.<your-org>.lacrimosa-watchdog"
+
+verification:
+  frontend_path_patterns:
+    - "<your-frontend-dir>/"
+
+# Sensor prompts substitute {product_name} and {product_description} automatically.
+# These default to product.name and product.description above.
+sensors:
+  prompt_context:
+    product_name: "${product.name}"
+    product_description: "${product.description}"
+
+# Optional — GitHub repo URL for PR links in dashboard
+# github:
+#   repo_url: "https://github.com/<owner>/<repo>"
