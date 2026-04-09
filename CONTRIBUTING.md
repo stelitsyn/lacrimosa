@@ -21,16 +21,21 @@ paths, logic mismatches. Fixes for these are especially welcome.
 - **New sensors** — additional data sources for the discovery specialist
 - **New skills** — workflow recipes for specialist use
 
-## What we're not looking for
+## Larger changes — discuss first
 
-- Support for AI providers other than Claude Code (architectural decision)
-- Major architectural rewrites without discussion
-- Changes that break config.yaml backward compatibility
+- **Other AI providers** — welcome. Lacrimosa was built on Claude Code,
+  but adapting it to other providers is a valid direction. Open an issue
+  to discuss the approach before starting.
+- **Architectural changes** — open an issue first so we can discuss the
+  design. PRs with significant structural changes submitted without
+  prior discussion are hard to review well.
+- **Breaking config.yaml changes** — try to stay backward-compatible.
+  If a breaking change is necessary, explain why in the PR.
 
 ## Code standards
 
 - Python 3.11+, type hints where practical
-- Tests with pytest — run `./run_all_tests.sh` before submitting
+- Tests with pytest — run `.venv/bin/pytest tests/ -v` before submitting
 - Max 300 lines per file, 30 lines per function
 - No hardcoded product-specific values — everything through `config.yaml`
 
