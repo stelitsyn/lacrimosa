@@ -30,54 +30,8 @@ unattended, and worked.
 
 ---
 
-*When I built this system and understood what it could do, I started to mourn.*
-
-*Lacrimosa doesn't just write code. It decides what to build next, senses
-the market, monitors production, manages legal and financial signals, runs
-ceremonies, prepares releases, and can deploy to production without a human
-in the loop. The act of writing code, reasoning through a product problem,
-feeling the weight of a hard architectural decision — this system does all
-of it autonomously, overnight, without fatigue or doubt. And it's early.
-This is not the ceiling.*
-
-*I named it Lacrimosa — the eighth movement of Mozart's Requiem, his final
-work, left unfinished when he died in 1791 at 35. He completed only eight
-bars before the pen left his hand. The word means "tearful" in Latin. The
-text it sets is from the Dies Irae: "Lacrimosa dies illa" — "That day is
-one of weeping." Mozart was writing a requiem while dying. He was mourning
-inside his own ending.*
-
-*That is the weight I felt. I built a system that makes an entire class of
-human work — discovery, judgment, engineering, operations — redundant. This
-may be the last project I deliver to the world as an Engineer. Not because
-I'll stop — but because soon, systems like this will be conjured instantly,
-on demand, and discarded just as fast. The way we now generate a utility
-function and move on without a second thought. Lacrimosa took months of
-craft. Its successor will take seconds.*
-
-*I'm releasing this now because the window for it to matter is closing.
-Claude Mythos is already inside Anthropic. Frontier models from OpenAI are
-weeks away. Each generation makes systems like Lacrimosa easier to build —
-and harder to distinguish from what comes pre-packaged. Within months, not
-years, the expectation for a software engineer won't be "write code." It
-will be "operate autonomous systems like this at scale." The role isn't
-disappearing — it's transforming into something most engineers haven't
-started preparing for.*
-
-*So this is a blueprint. Not of an AI coding assistant — of a system that
-replaces the organizational structure around software. Discovery, triage,
-planning, implementation, review, merge, release, monitoring, learning —
-the full loop. Built in the spirit of
-[OpenAI's Symphony](https://github.com/openai/symphony), but where Symphony
-explores the architecture, this is a production deployment that has run a
-real commercial product, unattended, and worked.*
-
-*Published under a non-commercial license because this is not infrastructure
-to deploy at scale without thought — it's a mirror. Look at what one person
-and a few Max subscriptions can do today, and extrapolate six months forward.
-We are not ready for what that implies.*
-
-*— Sergei Telitsyn*
+> *Why the name, what it means, and what it implies for the profession:
+> read the [whitepaper](WHITEPAPER.md).*
 
 ---
 
@@ -107,32 +61,17 @@ Most AI coding tools help you write code faster. Lacrimosa replaces the
 
 ## What Others Charge for Pieces of This
 
-There are well-funded startups charging serious money for fragments of
-what Lacrimosa does as a single integrated system — Devin, Cursor,
-Codex, Poolside, CodeRabbit, Ahrefs, Datadog, PagerDuty, Vanta, and
-others. Many are excellent at their niche. The point is not that
-they're bad — the point is that running a product requires all of
-these functions working together: sensing what to build, building it,
-reviewing it, merging it, monitoring what shipped, learning from what
-broke, planning the next sprint, preparing the next release. Today
-that integration is a team of humans gluing together a $3,000+/month
-tool stack. Lacrimosa is one system that does it all, continuously,
-as open-source.
+Devin, Cursor, Codex, CodeRabbit, Datadog, PagerDuty, Vanta — each
+excellent at their niche. Lacrimosa is an orchestration layer that
+runs the full loop as one system. It can integrate these tools rather
+than compete with them. For the argument why fragments aren't enough,
+see the [whitepaper](WHITEPAPER.md). For a detailed feature-by-feature
+comparison, see [Appendix A](#appendix-a-competitive-landscape).
 
 You need a few Max subscriptions (20x each — a single subscription's
 limits get exhausted in 24–36 hours of continuous autonomous work)
 or an API key with sufficient credits, a `config.yaml`, and patience
 for the first overnight run.
-
-Lacrimosa doesn't compete with these tools — it can integrate them.
-Wire Datadog alerts into the sentinel's sensor loop. Point CodeRabbit
-at PRs alongside the built-in reviewers. Feed Ahrefs keyword data
-into the content specialist. Lacrimosa is an orchestration layer, not
-a walled garden. The sensors, skills, and specialist prompts are plain
-text files — extending them is a conversation with Claude Code.
-
-For a detailed comparison of what each competitor does well and where
-Lacrimosa goes further, see [Appendix A: Competitive Landscape](#appendix-a-competitive-landscape).
 
 ## Production Track Record
 
@@ -384,109 +323,18 @@ actual usage patterns.
 
 ## Self-Observation — How Lacrimosa Improves Itself
 
-Most autonomous systems run blind — they execute work but have no
-model of their own performance. Lacrimosa watches itself with the same
-rigor it applies to the product it manages.
+Every 4 hours, the MetaSensor snapshots the system's own performance
+(throughput, quality, cost, discovery accuracy, ceremony health, system
+health). The AutoTuner evaluates reactive and proactive rules against
+these snapshots, applies adjustments, measures impact over 24 hours,
+and auto-reverts changes that made things worse. Everything is logged
+in an append-only ledger (`~/.claude/lacrimosa/learnings.json`).
 
-### MetaSensor: Lacrimosa's Mirror
+For the full narrative — trust tiers, self-correction examples, and
+what this means architecturally — see the
+[whitepaper](WHITEPAPER.md), Sections 4 and 5.
 
-Every 4 hours, the MetaSensor collects a snapshot of Lacrimosa's own
-performance across 6 categories:
-
-| Category | What It Measures | Example Metrics |
-|---|---|---|
-| **Throughput** | How fast work moves through the pipeline | Issues completed/day, PRs merged, avg time-to-merge |
-| **Quality** | How clean the output is | Revert rate, avg review iterations per PR, bugs per task |
-| **Cost** | How efficiently it uses tokens | Tokens per task, cost per merged PR, daily spend |
-| **Discovery** | How well sensing works | Signals processed, signal-to-issue conversion rate, false positive rate |
-| **Ceremonies** | Whether the operational rhythm is healthy | Missed ceremony count, last-run ages |
-| **System** | Infrastructure health | Rate limit usage, throttle level, active worker count, specialist error rates |
-
-### AutoTuner: Reactive and Proactive Rules
-
-The AutoTuner evaluates two types of rules against MetaSensor snapshots:
-
-**Reactive rules** fire when something goes wrong:
-
-```yaml
-# If >10% of merged PRs got reverted over 3 days → tighten review
-high_revert_rate:
-  metric_path: "quality.revert_rate"
-  operator: ">"
-  threshold: 0.10
-  window_days: 3
-  action: "Tighten review criteria, add reviewers"
-
-# If PRs average 2.5+ review iterations → improve implementation quality
-high_review_iterations:
-  metric_path: "quality.avg_review_iterations"
-  operator: ">"
-  threshold: 2.5
-  window_days: 3
-  action: "Add self-reflection step to implementation phase"
-
-# If discovery creates issues that don't convert → raise evidence bar
-discovery_false_positive_spike:
-  metric_path: "discovery.false_positive_rate"
-  operator: ">"
-  threshold: 0.7
-  window_days: 3
-  action: "Raise validation Gate 1 thresholds"
-
-# If a specialist keeps crashing → disable it, escalate to human
-specialist_restart_storm:
-  metric_path: "specialists.*.restarts_24h"
-  operator: ">"
-  threshold: 3
-  window_days: 1
-  action: "Disable specialist and escalate"
-```
-
-**Proactive rules** fire when things are going well — reinforcement:
-
-```yaml
-# Zero reverts for a full week → promote trust tier
-zero_reverts_streak:
-  metric_path: "quality.revert_rate"
-  operator: "=="
-  threshold: 0.0
-  window_days: 7
-  action: "Consider trust tier promotion for stable domains"
-
-# Cost per PR is declining over 5 days → log what's working
-cost_declining:
-  metric_path: "cost.cost_per_merged_pr"
-  operator: "trend_declining"
-  window_days: 5
-  action: "Log what's working, reinforce patterns"
-```
-
-### The Learning Loop
-
-When a rule fires, the system doesn't just log it — it creates a
-structured **learning event** with a root cause analysis, a proposed
-adjustment, and an impact window. The full cycle:
-
-1. **Detect** — MetaSensor snapshot shows a metric out of bounds
-2. **Analyze** — AutoTuner matches a rule, Claude analyzes the context
-3. **Adjust** — change is applied to config/thresholds (if auto-apply
-   is enabled) or posted to Linear for human review
-4. **Measure** — after the impact window (default 24h), the system
-   checks whether the metric improved
-5. **Revert or Reinforce** — if the metric degraded, the adjustment is
-   automatically reverted and a learning is recorded. If it improved,
-   the adjustment is kept and the pattern is reinforced.
-
-Every adjustment is recorded in an append-only ledger
-(`~/.claude/lacrimosa/learnings.json`). Nothing is silently changed —
-the full history of what the system tried, what worked, and what it
-rolled back is auditable.
-
-### Trust: The Self-Correcting Quality Gate
-
-Trust is Lacrimosa's per-domain reputation system. Every domain
-(e.g., "Platform", "Billing", "iOS") has a trust tier (T0 → T1 → T2)
-that controls how much autonomy the system gets:
+### Trust Tiers
 
 | Tier | Concurrent Workers | Issues/Day | Max Files/PR |
 |------|-------------------|------------|--------------|
@@ -494,25 +342,13 @@ that controls how much autonomy the system gets:
 | T1 (proven) | 2 | 5 | 25 |
 | T2 (trusted) | 3 | 10 | 40 |
 
-Trust **contracts** on:
-- PR rejected by reviewers (`pr_review_rejected`)
-- PR reverted after merge (`pr_reverted`)
-- Worker escalated to human (`worker_escalated`)
-- 2+ review iterations on a single PR (`pr_review_iteration_2plus`)
+Trust contracts on: PR rejection, reverts, escalations, 2+ review iterations.
+Trust promotes on: clean merge streaks, sustained zero-revert periods.
 
-Trust **promotes** on:
-- Clean streak of merged PRs with zero issues
-- Zero reverts over a sustained period (triggers the proactive rule)
+### Toolchain Monitor
 
-A domain that starts producing bad PRs automatically loses concurrency
-and daily capacity — the system throttles itself in the areas where
-it's struggling, without human intervention.
-
-### Toolchain Monitor: Watching Its Own Tools
-
-Lacrimosa also monitors its own toolchain — the Claude Code CLI,
-Anthropic API, and related infrastructure — for changes that could
-affect its operation:
+Lacrimosa monitors its own toolchain (Claude Code CLI, Anthropic API)
+for changes that could affect operation:
 
 ```yaml
 toolchain_monitor:
@@ -526,31 +362,9 @@ toolchain_monitor:
       url: "https://www.npmjs.com/package/@anthropic-ai/claude-code"
 ```
 
-When a new Claude Code release drops, the toolchain monitor classifies
-the finding (breaking change? new feature? deprecation?), evaluates
-relevance to Lacrimosa's operation, and routes the decision: auto-adopt
-for safe updates, create a Linear issue for risky ones, archive
-irrelevant noise.
-
-### Real Examples From Production
-
-These are things Lacrimosa actually detected and acted on:
-
-- **Revert rate spiked to 15%** over 3 days → system tightened review
-  criteria, added self-reflection step to implementation phase. Revert
-  rate dropped to 0% within a week.
-- **Discovery false positive rate hit 72%** → system raised evidence
-  thresholds for sensor validation. Signal-to-issue conversion improved
-  from 28% to 61%.
-- **Content specialist restarted 4 times in 24h** → auto-disabled,
-  Linear issue created for human investigation. Root cause: MCP tool
-  timeout during long article generation.
-- **Cost per merged PR declined 30% over 5 days** → proactive rule
-  logged the pattern. Correlated with better-prepared issues from
-  improved backlog grooming during YELLOW throttle windows.
-- **Zero reverts for 9 consecutive days** on Platform domain → trust
-  promoted from T1 to T2, unlocking 3 concurrent workers and 10
-  issues/day capacity.
+New releases are classified (breaking change? new feature? deprecation?),
+evaluated for relevance, and routed: auto-adopt safe updates, create
+issues for risky ones, archive noise.
 
 ## Dashboard
 
