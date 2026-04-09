@@ -400,24 +400,22 @@ ruff format src/
 
 ```
 schema-mcp/
-├── src/schema_mcp/
-│   ├── __init__.py
-│   ├── __main__.py          # Entry point
-│   ├── server.py             # MCP server with tool definitions
-│   ├── models/
-│   │   └── inputs.py         # Pydantic input models
-│   ├── tools/
-│   │   ├── schema_reader.py  # Read operations
-│   │   ├── schema_search.py  # Search logic
-│   │   ├── schema_index.py   # Index parsing
-│   │   └── schema_writer.py  # Write operations
-│   ├── services/
-│   │   └── embedding_service.py  # Semantic search
-│   └── utils/
-│       └── errors.py         # Custom exceptions
+├── __init__.py
+├── __main__.py              # Entry point
+├── server.py                # MCP server with tool definitions
+├── models/
+│   └── inputs.py            # Pydantic input models
+├── tools/
+│   ├── ki_tools.py          # Knowledge Index operations
+│   ├── schema_reader.py     # Read operations
+│   ├── schema_search.py     # Search logic
+│   ├── schema_index.py      # Index parsing
+│   └── schema_writer.py     # Write operations
+├── services/
+│   └── embedding_service.py # Semantic search
+├── utils/
+│   └── errors.py            # Custom exceptions
 ├── tests/
-├── examples/
-│   └── schemas/              # Sample schemas
 ├── pyproject.toml
 └── README.md
 ```
