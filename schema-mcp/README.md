@@ -353,24 +353,6 @@ List all KI keys with compact values.
 
 **Returns:** Keys grouped by file with total count
 
-### CLI Usage
-
-KI tools are also available via the CLI:
-
-```bash
-# Single lookup
-python schema_cli.py ki get "db.us.prod.instance"
-
-# Batch lookup
-python schema_cli.py ki mget db.us.prod.instance db.eu.prod.instance
-
-# Browse by prefix
-python schema_cli.py ki list --prefix "db."
-
-# Upsert an entry
-python schema_cli.py ki set "gotcha.new_finding" "description" "file.py:L42"
-```
-
 ## Semantic Search
 
 When installed with `[semantic]` extras, the server uses [sentence-transformers](https://www.sbert.net/) for AI-powered search:
