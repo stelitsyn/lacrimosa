@@ -12,6 +12,9 @@ paths, logic mismatches. Fixes for these are especially welcome.
 4. Run the test suite: `.venv/bin/pytest tests/ -v`
 5. Submit a PR referencing the issue
 
+All PRs require manual approval from the maintainer. There are no
+auto-merge rules — every change is reviewed before it enters the repo.
+
 ## What we're looking for
 
 - **Bug fixes** — broken config paths, logic errors, test failures
