@@ -32,13 +32,6 @@ paths, logic mismatches. Fixes for these are especially welcome.
 - **Breaking config.yaml changes** — try to stay backward-compatible.
   If a breaking change is necessary, explain why in the PR.
 
-## Code standards
-
-- Python 3.11+, type hints where practical
-- Tests with pytest — run `.venv/bin/pytest tests/ -v` before submitting
-- Max 300 lines per file, 30 lines per function
-- No hardcoded product-specific values — everything through `config.yaml`
-
 ## License
 
 By contributing, you agree that your contributions will be licensed
