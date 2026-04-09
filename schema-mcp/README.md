@@ -4,7 +4,7 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for ma
 
 ## Features
 
-- **8 MCP Tools** for comprehensive schema management:
+- **12 MCP Tools** for comprehensive schema and knowledge management:
   - `schema_read` - Read schema files with optional metadata
   - `schema_list` - List schemas with filtering and pagination
   - `schema_search` - Search with keyword, semantic, or hybrid modes
@@ -13,6 +13,10 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for ma
   - `schema_create` - Create new schema files
   - `schema_update` - Update existing schemas
   - `schema_delete` - Delete schemas (with confirmation)
+  - `ki_get` - Get a single Knowledge Index entry by dot-notation key
+  - `ki_mget` - Batch-get multiple KI entries in one call
+  - `ki_set` - Upsert a KI entry atomically with file locking
+  - `ki_list` - List KI keys with compact values, filterable by file or prefix
 
 - **Three Search Modes**:
   - **Keyword**: Fast lexical matching with exact phrase, AND, and OR logic
@@ -283,6 +287,89 @@ Delete a schema file (requires explicit confirmation).
 - `confirm` (bool): Must be `true` to proceed
 
 **Returns:** Deletion result
+
+## Knowledge Index (KI) Tools
+
+The server includes a Knowledge Index — a structured key-value store for infrastructure facts, business rules, architecture decisions, and other project knowledge. KI entries are YAML blocks embedded in `KI_*_SCHEMA.md` files, organized by domain prefix.
+
+### Key Prefix Routing
+
+Keys are automatically routed to the correct KI file based on their prefix:
+
+| Prefix | KI File | Contains |
+|--------|---------|----------|
+| `db.*`, `cloudrun.*`, `url.*`, `gcp.*`, `firebase.*`, `secrets.*`, `dev.*` | `KI_INFRA_SCHEMA` | DB instances, services, URLs, secrets |
+| `arch.*` | `KI_ARCHITECTURE_SCHEMA` | System flows, service relationships |
+| `code.*` | `KI_CODE_MAP_SCHEMA` | Key handlers, services, entry points |
+| `api.*` | `KI_API_SURFACE_SCHEMA` | Endpoints, methods, ownership |
+| `db.table.*`, `db.stats.*` | `KI_DB_MAP_SCHEMA` | Tables, columns, relationships |
+| `gotcha.*` | `KI_GOTCHAS_SCHEMA` | Pitfalls, solved issues |
+| `billing.*`, `plan.*`, `credits.*`, `payments.*` | `KI_BUSINESS_RULES_SCHEMA` | Pricing, credits, billing |
+| `convention.*` | `KI_CONVENTIONS_SCHEMA` | Coding rules, deployment, workflow |
+| `decision.*` | `KI_DECISIONS_SCHEMA` | Architectural decisions + rationale |
+| `hierarchy.*` | `KI_SERVICE_HIERARCHY_SCHEMA` | Service class hierarchy |
+
+### ki_get
+
+Get a single KI entry by exact key match.
+
+**Parameters:**
+- `key` (str): Dot-notation key (e.g., `db.us.prod.instance`)
+- `fuzzy` (bool, optional): Match keys containing the query instead of exact match. Default: `false`
+
+**Returns:** Entry with key, value, source, and verified date — or similar keys if not found
+
+### ki_mget
+
+Batch-get multiple KI entries in one call. Files are parsed once and shared across lookups, making this much more efficient than calling `ki_get` N times.
+
+**Parameters:**
+- `keys` (list[str]): List of dot-notation keys to look up
+- `fuzzy` (bool, optional): Match keys containing the query. Default: `false`
+
+**Returns:** Found entries, missing keys, and counts
+
+### ki_set
+
+Upsert a single KI entry atomically with file locking for concurrent write safety.
+
+**Parameters:**
+- `key` (str): Dot-notation key (e.g., `gotcha.cloudflare.worker_timeout`)
+- `value` (str): The fact value to store
+- `source` (str): Source reference (e.g., `server.py:L42`)
+- `verified` (str, optional): Verification date. Default: today's date
+- `extra_fields` (dict, optional): Additional fields to store with the entry
+- `section_hint` (str, optional): Markdown section heading to target for new entries
+
+**Returns:** Operation result (created/updated) with file name
+
+### ki_list
+
+List all KI keys with compact values.
+
+**Parameters:**
+- `file_filter` (str, optional): Only list keys from a specific KI file (e.g., `KI_INFRA_SCHEMA`)
+- `prefix_filter` (str, optional): Only list keys matching this prefix (e.g., `db.`)
+
+**Returns:** Keys grouped by file with total count
+
+### CLI Usage
+
+KI tools are also available via the CLI:
+
+```bash
+# Single lookup
+python schema_cli.py ki get "db.us.prod.instance"
+
+# Batch lookup
+python schema_cli.py ki mget db.us.prod.instance db.eu.prod.instance
+
+# Browse by prefix
+python schema_cli.py ki list --prefix "db."
+
+# Upsert an entry
+python schema_cli.py ki set "gotcha.new_finding" "description" "file.py:L42"
+```
 
 ## Semantic Search
 
