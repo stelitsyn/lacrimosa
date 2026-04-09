@@ -1,9 +1,22 @@
 .venv/
-**/.DS_Store
-**/__pycache__/
+.DS_Store
+__pycache__/
 *.pyc
-**/.pytest_cache/
+.pytest_cache/
 *.egg-info/
 dist/
 build/
 .embeddings_cache.json
+
+# User config (contains secrets/paths — never commit)
+config.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*

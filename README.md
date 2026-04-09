@@ -445,7 +445,39 @@ corrections are welcome: open a GitHub issue or submit a PR.
 
 ## Quick Start
 
-[Install, configure, run]
+### Prerequisites
+
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed
+- One or more Claude Code Max subscriptions (20x) or API key with sufficient credits
+- A [Linear](https://linear.app) workspace (free tier works)
+- Python 3.11+
+
+### Setup
+
+```bash
+# 1. Clone
+git clone https://github.com/stelitsyn/lacrimosa.git
+cd lacrimosa
+
+# 2. Python environment
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# 3. Configure
+cp config.example.yaml ~/.claude/lacrimosa/config.yaml
+# Edit config.yaml — fill in all <PLACEHOLDER> values
+
+# 4. Linear API key (for autonomous issue management)
+# Create a personal API key at linear.app → Settings → API
+echo "your-linear-api-key" > ~/.claude/lacrimosa/linear-api-key
+
+# 5. Start the conductor
+claude -p "Use the lacrimosa skill. Start the conductor."
+```
+
+The conductor will health-check all specialists, start them in tmux
+sessions, and begin the autonomous loop. First run takes a few minutes
+to initialize state. Watch the dashboard at `http://localhost:1791`.
 
 ## License
 
