@@ -459,19 +459,32 @@ corrections are welcome: open a GitHub issue or submit a PR.
 git clone https://github.com/stelitsyn/lacrimosa.git
 cd lacrimosa
 
-# 2. Python environment
+# 2. Let Claude Code handle the rest
+claude
+```
+
+The recommended approach is to point Claude Code at the repo and let
+it walk you through configuration. The `CLAUDE.md`, `config.example.yaml`,
+and skill files give it everything it needs to guide setup — creating
+your `config.yaml`, setting up the Python environment, configuring
+Linear, and starting the conductor.
+
+Alternatively, if you prefer manual setup:
+
+```bash
+# Python environment
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-# 3. Configure
+# Configure
 cp config.example.yaml ~/.claude/lacrimosa/config.yaml
 # Edit config.yaml — fill in all <PLACEHOLDER> values
 
-# 4. Linear API key (for autonomous issue management)
+# Linear API key (for autonomous issue management)
 # Create a personal API key at linear.app → Settings → API
 echo "your-linear-api-key" > ~/.claude/lacrimosa/linear-api-key
 
-# 5. Start the conductor
+# Start the conductor
 claude -p "Use the lacrimosa skill. Start the conductor."
 ```
 
