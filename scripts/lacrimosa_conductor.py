@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from scripts import lacrimosa_config
+from scripts.lacrimosa_agent_runner import start_agent_prompt
 from scripts.lacrimosa_types import (
     HARDCODED_MAX_CONCURRENT_WORKERS,
     HARDCODED_MAX_ISSUES_PER_DAY,
@@ -222,17 +223,14 @@ def dispatch_worker(
             )
 
     worktree_name = f"lacrimosa-{issue_id}"
-    cmd: list[str] = ["claude", "--print", "--output-format", "json"]
-    if phase in DANGEROUS_PHASES:
-        cmd.append("--dangerously-skip-permissions")
-    cmd.extend(["--worktree", worktree_name, "--add-dir", str(PROJECT_ROOT), "-p", prompt])
-
-    proc = subprocess.Popen(
-        cmd,
-        cwd=str(PROJECT_ROOT),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        start_new_session=True,
+    proc = start_agent_prompt(
+        prompt,
+        purpose=f"worker-dispatch-{issue_id}",
+        json_mode=True,
+        dangerous=phase in DANGEROUS_PHASES,
+        cwd=PROJECT_ROOT,
+        extra_add_dirs=[PROJECT_ROOT],
+        worktree_name=worktree_name,
     )
     started_at = datetime.now(timezone.utc).isoformat()
     logger.info("Dispatched worker PID=%d for %s phase=%s", proc.pid, issue_id, phase)

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from scripts.lacrimosa_agent_runner import run_agent_prompt
 from scripts.lacrimosa_types import (
     EVENT_SEVERITY_MAP,
     REQUIRED_ADJUSTMENT_FIELDS,
@@ -325,23 +326,22 @@ class LearningsEngine:
         )
 
     def _dispatch_claude(self, prompt: str) -> str | None:
-        cmd = ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt]
         for attempt in range(MAX_LEARNING_RETRIES + 1):
             try:
-                r = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
+                r = run_agent_prompt(
+                    prompt,
+                    purpose="learning-analysis",
                     timeout=LLM_TIMEOUT_SECONDS,
                     cwd=str(PROJECT_ROOT),
+                    dangerous=True,
                 )
                 if r.returncode == 0 and r.stdout.strip():
                     return r.stdout.strip()
-                logger.warning("Claude code %d (attempt %d)", r.returncode, attempt + 1)
+                logger.warning("Agent code %d (attempt %d)", r.returncode, attempt + 1)
             except subprocess.TimeoutExpired:
-                logger.warning("Claude timed out (attempt %d)", attempt + 1)
+                logger.warning("Agent timed out (attempt %d)", attempt + 1)
             except FileNotFoundError:
-                logger.error("Claude CLI not found")
+                logger.error("Agent CLI not found")
                 return None
         return None
 

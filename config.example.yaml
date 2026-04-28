@@ -15,6 +15,41 @@ conductor:
   log_file: ~/.claude/lacrimosa/conductor.log
   default_session_mode: interactive
 
+ceremonies:
+  enabled: true
+  run_on_empty_pipeline: true
+  priority_order:
+    - sprint_planning
+    - standup
+    - backlog_grooming
+    - worktree_gc
+    - sprint_retro
+    - weekly_summary
+  standup:
+    enabled: true
+    cadence_hours: 4
+  sprint_planning:
+    enabled: true
+    sprint_duration_hours: 16
+    time: "08:00"
+  backlog_grooming:
+    enabled: true
+    cadence_hours: 12
+    stale_threshold_hours: 12
+    inactive_threshold_hours: 48
+  sprint_retro:
+    enabled: true
+    time: "22:00"
+  weekly_summary:
+    enabled: true
+    day: friday
+    time: "22:30"
+  worktree_gc:
+    enabled: true
+    cadence_hours: 24
+    stale_days: 14
+    force: false  # keep public default dry-run; set true only after reviewing cleanup behavior
+
 linear:
   workspace_slug: "<your-linear-workspace>"   # e.g. "acme-inc"
   issue_prefix: "<ISSUE_PREFIX>"              # e.g. "ACM"

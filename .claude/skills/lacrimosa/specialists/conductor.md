@@ -200,23 +200,52 @@ For each event, take the appropriate action based on `event_type`:
 
 | Event Type | Action |
 |-----------|--------|
-| `infrastructure_degradation` | Create Linear issue in Infrastructure, post finding |
-| `compliance_audit` | Review findings, verify new issues were created, post summary to pulse |
-| `cfo_weekly_report` | Review financial findings, post to pulse |
-| `stale_backlog_detected` | Update Linear issue statuses, close stale issues |
-| `content_cycle_empty_pipeline` | Note for Discovery — signal pipeline needs new content issues |
+| **Engineering** | |
 | `pr_review_rejected` | Analyze pattern, consider prompt/config adjustment |
+| `pr_review_iteration_2plus` | Post pattern to pulse. If 3+ occurrences with same pattern, create improvement issue |
+| `merge_ci_failure` | Log root cause. If same CI check fails 3+, create infra issue |
+| `worker_stall` | Check if worker actually produced output (PR/commits). If truly stalled, log retry count. If 3+ stalls on same issue, escalate to human |
+| `false_alarm` | Extract the lesson (e.g. stall detection heuristic too aggressive), post to pulse, update detection logic if actionable |
+| **Discovery** | |
+| `discovery_cycle_complete` | Post cycle summary to pulse (high-value signals, gaps noted). If gaps_noted is non-empty, verify Discovery is tracking them |
+| `signal_validated` / `signals_validated` | Post validated signal to pulse with score. If gate3_score >= 8, flag as high-priority for triage |
+| **Infrastructure** | |
+| `infrastructure_degradation` | Create Linear issue in Infrastructure, post finding |
+| `stale_backlog_detected` | Update Linear issue statuses, close stale issues per the adjustment field |
+| **Content** | |
+| `content_cycle_empty_pipeline` / `content_cycle_empty` | Post to pulse. If 2+ consecutive empty cycles, create Discovery issue requesting new content topics |
+| **Finance (CFO)** | |
+| `cfo_weekly_report` | Review financial findings, post summary to pulse |
+| `weekly_financial_report` | Post MRR/churn/risk summary to pulse. If churn_rate > 30% or past_due > 3, flag as high priority |
+| `payment_churn_confirmed` | Post churn details to pulse with MRR impact. If mrr_lost > $50, create/update billing issue |
+| `churn_from_past_due` | Post to pulse. Verify dunning automation issue exists |
+| `cfo_stale_assumption` | Post the correction + lesson to pulse. Create a gotcha KI entry to prevent recurrence |
+| **Legal (CLO)** | |
+| `compliance_audit` | Review findings, verify new issues were created, post summary to pulse |
+| `compliance_finding` | Post findings + actions taken to pulse. Verify referenced issues exist |
+| `clo_gap_analysis` | Post gap summary to pulse. Verify P1 gaps have Linear issues created |
+| `clo_vendor_baa_assessment` | Post vendor assessment to pulse. If critical_finding is non-empty, create/flag issue |
+| `clo_cycle_complete` | Post cycle summary to pulse (findings, gaps identified) |
+| `clo_audit_correction` | Post the correction + lesson to pulse. This is a self-improvement signal — valuable |
+| `triage_quality_issue` | Post the problem + correction to pulse. If pattern field suggests recurring issue, create improvement issue |
+| **Lifecycle** | |
+| `cycle_resumed` | Post to pulse noting the gap duration and key findings |
+| `process_gap_detected` | Analyze severity. High/critical: comment on issue + create follow-up. Low: log to pulse |
 | `retro_observation` | Log pattern, create issue if actionable |
 
-**After acting on each event**, mark it processed:
+**Processing is handled by `scripts/lacrimosa_event_processor.py`:**
 ```bash
 .venv/bin/python -c "
-import sqlite3
-db = sqlite3.connect('$HOME/.claude/lacrimosa/state.db')
-db.execute('UPDATE learning_events SET processed = 1 WHERE id = ?', ('EVENT_ID',))
-db.commit()
+from scripts.lacrimosa_event_processor import process_all_pending
+results = process_all_pending()
+for r in results:
+    print(f'  [{r[\"source\"]}] {r[\"type\"]}')
+    print(f'    ACTION: {r[\"action\"]}')
+print(f'Total: {len(results)} processed')
 "
 ```
+
+Each event handler reads context, takes the specified action (post to pulse, create/comment on issues, flag risks), THEN marks processed. The fallback handler logs unrecognized types for review — no event is silently dropped.
 
 **NEVER bulk-mark all events as processed without reading and acting on each one.**
 
@@ -260,4 +289,5 @@ Heartbeat auto-updated by `sm.transaction("conductor")` commit.
 - All state writes via `sm.transaction("conductor")`
 - Conductor NEVER reads code, NEVER creates PRs, NEVER dispatches implementation work
 
+<!-- Known limitation: event nudges can be lost during /clear — best-effort only -->
 <!-- Known limitation: content specialist 25h detection gap — tmux has-session catches dead sessions -->

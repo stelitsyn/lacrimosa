@@ -218,7 +218,7 @@ review_iteration = pipeline_row.get("review_iteration") or 0
 
 #### 4c. Pre-Dispatch Validation Gate
 
-Before dispatching, verify all three conditions. SKIP the issue (do not fail it) if any check fails:
+Before dispatching, verify ALL conditions. SKIP the issue (do not fail it) if any check fails:
 
 ```bash
 # Check 1: Linear status is not Done or Cancelled
@@ -236,11 +236,49 @@ gh pr list --state merged --search "{issue_prefix}-123" --json number,title,merg
 
 # Check 3: No active open PR exists
 gh pr list --state open --search "{issue_prefix}-123" --json number,title,url
+
+# Check 4 (CRITICAL): Analyze Linear comments for "no implementation needed" signals
+.venv/bin/python -c "
+from scripts.lacrimosa_linear import get_issue_by_number, get_issue_comments
+import re
+
+issue = get_issue_by_number(123)  # replace with actual issue number
+comments = get_issue_comments(issue['id'])
+
+# Scan ALL comments (newest first) for stop signals
+STOP_PATTERNS = [
+    r'already\s+(done|implemented|fixed|merged|shipped)',
+    r'not\s+needed',
+    r'no\s+(implementation|work|changes?)\s+(needed|required)',
+    r'won.t\s+fix',
+    r'duplicate\s+of',
+    r'closing\s+(as|this)',
+    r'this\s+is\s+(already|no\s+longer)',
+    r'do\s+not\s+implement',
+    r'skip\s+this',
+    r'resolved\s+(by|in|via)',
+    r'superseded\s+by',
+]
+
+for c in comments:
+    body = (c.get('body') or '').lower()
+    for pattern in STOP_PATTERNS:
+        if re.search(pattern, body):
+            author = c.get('user', {}).get('name', 'unknown')
+            print(f'STOP_SIGNAL: \"{pattern}\" found in comment by {author}')
+            print(f'COMMENT: {body}')
+            print('SKIP: True')
+            exit(0)
+
+print('SKIP: False')
+print('No stop signals in', len(comments), 'comments')
+"
 ```
 
 If Linear is Done/Cancelled → update pipeline to Done/Failed, post Linear comment explaining reconciliation.
 If merged PR exists → transition to Done in pipeline, update Linear to Done.
 If open PR exists → transition directly to ReviewPending (skip dispatch).
+**If stop signal found in comments** → transition to Done/Failed in pipeline, post Linear comment: "Skipped — comment indicates no implementation needed: {signal}".
 
 #### 4d. Dispatch Implementation Worker
 
@@ -262,10 +300,17 @@ Title: {issue_title}
 Description:
 {issue_description}
 
-## Comments (read before implementing — may contain corrections or context)
+## Comments (MUST READ FIRST — may contain stop signals, corrections, or context)
 {comments_text}
 
 ## Instructions
+
+**STEP 0 (MANDATORY): Read ALL comments above BEFORE doing any work.**
+If any comment says the work is already done, not needed, a duplicate, superseded,
+or otherwise indicates no implementation is required — STOP IMMEDIATELY.
+Write to the output file: `echo "WORKER_FAILED reason=no_implementation_needed: <quote the comment>" > {output_file}`
+Do NOT proceed with implementation if comments tell you it's unnecessary.
+
 1. Assign the issue to Lacrimosa:
    from scripts.lacrimosa_linear import assign_to_lacrimosa, get_issue_by_number
    issue = get_issue_by_number({issue_num})
@@ -310,10 +355,19 @@ Title: {issue_title}
 Description:
 {issue_description}
 
+## All Comments on This Issue (MUST READ FIRST)
+{comments_text}
+
 ## Review Feedback to Address (iteration {review_iteration})
 {json.dumps(review_feedback, indent=2)}
 
 ## Instructions
+
+**STEP 0 (MANDATORY): Read ALL comments above BEFORE doing any work.**
+If any comment says the work is already done, not needed, a duplicate, superseded,
+or otherwise indicates no further work is required — STOP IMMEDIATELY.
+Write: `echo "WORKER_FAILED reason=no_work_needed: <quote the comment>" > {output_file}`
+
 1. Checkout the existing PR branch for {identifier} in this worktree
 2. Read the review feedback above carefully
 3. Fix EVERY issue listed in the feedback

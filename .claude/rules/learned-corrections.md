@@ -38,6 +38,10 @@
 
 - **Never skip Phase 4.1 Review Loop**: ALL implementations must go through the multi-reviewer feedback loop, regardless of how "straightforward" the change appears. Simplicity is not an excuse to bypass quality gates. The review loop exists to catch what you missed, not just for complex changes.
 
+- **Lacrimosa: Learning events must be PROPERLY PROCESSED**: Never bulk-mark learning events as `processed=1` without reading and acting on each one. "Acknowledge and mark" is NOT processing. For each event: (1) read the full context, (2) analyze what happened, (3) take the appropriate action per event_type — create issue, post comment, adjust config, escalate, etc. as defined in the conductor spec, (4) THEN mark processed. Skipping steps 1-3 is unacceptable.
+
+- **Lacrimosa: Workers must respect issue comments as stop signals**: Implementation workers MUST read ALL issue tracker comments before starting work. If any comment indicates the work is already done, not needed, a duplicate, or superseded — the worker must abort immediately and report `WORKER_FAILED reason=no_implementation_needed`. The pre-dispatch gate must also scan comments for stop signals before dispatching. Workers continuing to implement despite "not needed" comments is wasted compute and creates noise PRs.
+
 ## Serialization & State Safety
 
 - **Never put non-serializable objects in checkpointed state**: When working with LangGraph (or any framework that persists state via serialization), NEVER inject runtime service objects (LLM clients, DB connections, HTTP clients, credential managers) into the graph state. These cause serialization failures at runtime. Instead, pass non-serializable services via the framework's config dict (not checkpointed) or via module-level singletons. **Pre-flight check**: before any change that adds data to graph state, verify every value is serializable (primitives, dicts, lists, strings, numbers, None).

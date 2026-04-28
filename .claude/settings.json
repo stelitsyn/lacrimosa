@@ -2,6 +2,10 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [{"type": "command", "command": ".claude/hooks/enforce-fix-findings.sh"}]
+      },
+      {
         "matcher": "Agent|Bash",
         "hooks": [{"type": "command", "command": ".claude/hooks/enforce-corrections.sh"}]
       },
@@ -28,6 +32,15 @@
     ],
     "TaskCompleted": [
       {"hooks": [{"type": "command", "command": ".claude/hooks/validate-task-completion.sh"}]}
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/check-dismissive-language.sh"},
+          {"type": "command", "command": ".claude/hooks/challenge-handoff.sh"},
+          {"type": "command", "command": ".claude/hooks/challenge-scope-creep-dismissal.sh"}
+        ]
+      }
     ]
   },
   "mcpServers": {

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from scripts import lacrimosa_config
+from scripts.lacrimosa_agent_runner import run_agent_prompt
 from scripts.lacrimosa_signals import create_signal, persist_signal
 
 logger = logging.getLogger(__name__)
@@ -313,19 +314,17 @@ def _dispatch_llm_sensor(
 
     SEC-C02: Sensors use --print only (NO --dangerously-skip-permissions).
     """
-    cmd = ["claude", "--print", "-p", prompt]
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
+        result = run_agent_prompt(
+            prompt,
+            purpose=f"sensor-{sensor}",
             timeout=120,
         )
     except subprocess.TimeoutExpired:
         logger.warning("LLM sensor %s timed out", sensor)
         return []
     except FileNotFoundError:
-        logger.warning("claude CLI not found for sensor %s", sensor)
+        logger.warning("Agent CLI not found for sensor %s", sensor)
         return []
 
     if result.returncode != 0:

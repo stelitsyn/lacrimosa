@@ -11,6 +11,11 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from scripts import lacrimosa_config
+try:
+    from scripts.lacrimosa_agent_runner import run_agent_prompt
+except ImportError:  # pragma: no cover - supports direct script imports
+    from lacrimosa_agent_runner import run_agent_prompt
+
 from lacrimosa_signals import create_signal, persist_signal
 from lacrimosa_validation import (
     can_crawl_externally,
@@ -208,16 +213,14 @@ def create_discovery_issue(
         '"reason": "created" or "duplicate: ISSUE-XX"}'
     )
 
-    cmd = ["claude", "--print", "-p", create_prompt]
     try:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
+        proc = run_agent_prompt(
+            create_prompt,
+            purpose="discovery-issue-creation",
             timeout=_ISSUE_CREATION_TIMEOUT,
         )
         if proc.returncode != 0:
-            result["reason"] = f"Claude CLI failed: {proc.stderr[:200]}"
+            result["reason"] = f"Agent CLI failed: {proc.stderr[:200]}"
             logger.warning("Discovery issue creation failed: %s", proc.stderr[:200])
             return result
 
@@ -240,8 +243,8 @@ def create_discovery_issue(
         result["reason"] = "Issue creation timed out"
         logger.warning("Discovery issue creation timed out")
     except FileNotFoundError:
-        result["reason"] = "Claude CLI not found"
-        logger.warning("Claude CLI not found for discovery issue creation")
+        result["reason"] = "Agent CLI not found"
+        logger.warning("Agent CLI not found for discovery issue creation")
 
     return result
 
@@ -444,27 +447,17 @@ def _crawl_websearch(url: str, config: dict[str, Any]) -> str | None:
     Falls through to skip_and_log on timeout.
     """
     timeout = config.get("crawl", {}).get("websearch_timeout_seconds", 2)
-    cmd = [
-        "claude",
-        "--print",
-        "-p",
-        f"Fetch the content of this URL: {url}. "
-        "Return the main text content as a string. No markdown formatting.",
-    ]
     try:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
+        proc = run_agent_prompt(
+            f"Fetch the content of this URL: {url}. "
+            "Return the main text content as a string. No markdown formatting.",
+            purpose="websearch-fetch",
+            timeout=timeout,
         )
-        try:
-            stdout, _ = proc.communicate(timeout=timeout)
-            if proc.returncode == 0 and stdout.strip():
-                return stdout.strip()
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.communicate()
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout.strip()
+    except subprocess.TimeoutExpired:
+        pass
     except (FileNotFoundError, OSError):
         pass
     return None

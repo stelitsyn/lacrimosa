@@ -13,6 +13,11 @@ import re as _re
 from scripts import lacrimosa_config
 from lacrimosa_types import SCORING_DIMENSIONS
 
+try:
+    from scripts.lacrimosa_agent_runner import run_agent_prompt
+except ImportError:  # pragma: no cover - supports direct script imports
+    from lacrimosa_agent_runner import run_agent_prompt
+
 
 def _sanitize_for_prompt(text: str) -> str:
     """Sanitize content for LLM prompt inclusion (local copy to avoid circular import)."""
@@ -166,18 +171,11 @@ def _dispatch_scoring_session(prompt: str, attempt: int) -> str:
             "\n\nYour previous response was not valid JSON. " "Respond with ONLY a JSON object."
         )
 
-    cmd = [
-        "claude",
-        "--print",
-        "--dangerously-skip-permissions",
-        "-p",
+    result = run_agent_prompt(
         prompt,
-    ]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+        purpose="signal-scoring",
         timeout=SCORING_TIMEOUT_SECONDS,
+        dangerous=True,
     )
     return result.stdout
 
@@ -213,21 +211,17 @@ def check_deduplication(
     tags = signal.get("relevance_tags", [])
     query = f"{summary} {' '.join(tags)}"
 
-    cmd = [
-        "claude",
-        "--print",
-        "-p",
+    prompt = (
         f"Search Linear and GitHub issues for: {query}. "
         "If a matching open issue exists, return its ID (e.g., ISSUE-XX). "
         "If matching issues are Done/Cancelled, treat as novel. "
-        'Output ONLY JSON: {{"is_novel": true/false, "existing_issue": "ISSUE-XX" or null}}',
-    ]
+        'Output ONLY JSON: {{"is_novel": true/false, "existing_issue": "ISSUE-XX" or null}}'
+    )
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
+        result = run_agent_prompt(
+            prompt,
+            purpose="signal-deduplication",
             timeout=60,
         )
         data = _extract_json_object(result.stdout)

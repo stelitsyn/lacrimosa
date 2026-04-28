@@ -19,6 +19,7 @@ from enum import StrEnum
 from typing import Any
 
 from scripts import lacrimosa_config
+from scripts.lacrimosa_agent_runner import run_agent_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -327,11 +328,9 @@ def _dispatch_classification_session(
             "Respond with ONLY a JSON object."
         )
 
-    cmd = ["claude", "--print", "-p", prompt]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+    result = run_agent_prompt(
+        prompt,
+        purpose="intake-classification",
         timeout=CLASSIFICATION_TIMEOUT_SECONDS,
     )
     return result.stdout
@@ -390,20 +389,16 @@ def _dispatch_dedup_session(summary: str, tags: list[str]) -> str:
     query = f"{summary} {' '.join(tags)}"
     sanitized_query = _sanitize_for_prompt(query)
 
-    cmd = [
-        "claude",
-        "--print",
-        "-p",
+    prompt = (
         f"Search Linear and GitHub issues for: {sanitized_query}. "
         "If a matching open issue exists, return its ID (e.g., ISSUE-XX). "
         "If matching issues are Done/Cancelled, treat as novel. "
-        'Output ONLY JSON: {{"is_novel": true/false, "existing_issue": "ISSUE-XX" or null}}',
-    ]
+        'Output ONLY JSON: {{"is_novel": true/false, "existing_issue": "ISSUE-XX" or null}}'
+    )
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+    result = run_agent_prompt(
+        prompt,
+        purpose="intake-deduplication",
         timeout=DEDUP_TIMEOUT_SECONDS,
     )
     return result.stdout
@@ -485,8 +480,8 @@ def create_linear_issue_from_intake(
         result["reason"] = "Issue creation timed out"
         logger.warning("Intake issue creation timed out")
     except FileNotFoundError:
-        result["reason"] = "Claude CLI not found"
-        logger.warning("Claude CLI not found for intake issue creation")
+        result["reason"] = "Agent CLI not found"
+        logger.warning("Agent CLI not found for intake issue creation")
     except Exception as exc:
         result["reason"] = f"Issue creation failed: {exc}"
         logger.warning("Intake issue creation failed: %s", exc)
@@ -496,12 +491,11 @@ def create_linear_issue_from_intake(
 
 def _dispatch_issue_creation_session(prompt: str) -> str:
     """Dispatch Claude session for issue creation."""
-    cmd = ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+    result = run_agent_prompt(
+        prompt,
+        purpose="intake-issue-creation",
         timeout=ISSUE_CREATION_TIMEOUT_SECONDS,
+        dangerous=True,
     )
     return result.stdout
 
