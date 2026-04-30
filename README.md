@@ -28,6 +28,8 @@ Built on Anthropic's Claude Code. In the spirit of
 Symphony explores the architecture, this ran a real commercial product,
 unattended, and worked.
 
+[UPD Apr 30, 2026]: Now works with Codex!
+
 ---
 
 > *Why the name, what it means, and what it implies for the profession:
